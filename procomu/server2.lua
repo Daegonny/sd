@@ -1,7 +1,7 @@
 local socket = require("socket")
 local clock = os.clock
 
-local posix = require 'posix.unistd'
+local unistd = require 'posix.unistd'
 
 local server = assert(socket.bind("*", 2323))
 
@@ -17,20 +17,26 @@ function calculate(x)
 end
 
 function clone(client)
-  local childpid = posix.fork()
+  local childpid = unistd.fork()
   if childpid == 0 then
-    local line, err = client:receive()
+    local line, err = client:receive("*l")
     print("calculate("..line..")")
-    if not err then client:send(calculate(line)) end
+    if not err then
+      client:send(calculate(line))
+    else
+      print(err)
+    end
     client:close()
-    posix._exit(0)
+    unistd._exit(0)
   else
-    require 'posix.sys.wait'.wait(childpid)
+    client:close()
   end
 end
 
 while true do
   local client = server:accept()
-  print("client conected "..client:getpeername())
-  clone(client)
+  if client then
+    print("client conected "..client:getpeername())
+    clone(client)
+  end
 end

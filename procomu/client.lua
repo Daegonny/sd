@@ -15,7 +15,7 @@ end
 function calculate(x)
   local conn = connect()
   conn:send(serialize(x))
-  local s, status, partial = conn:receive()
+  local s, status, partial = conn:receive("*l")
   conn:close()
   return s or partial
 end
